@@ -38,7 +38,7 @@ jobs:
       - name: Install build tools with Chocolatey
         shell: pwsh
         run: |
-          choco install -y --limit-output cmake git python3 yasm 7zip llvm strawberryperl
+          choco install -y --limit-output cmake git python3 nasm 7zip llvm strawberryperl
           # Wait up to ~30s for tools to appear in PATH if necessary
           $tries = 0
           while ($tries -lt 15 -and -not (Get-Command clang -ErrorAction SilentlyContinue)) {
@@ -73,7 +73,7 @@ jobs:
           Write-Host "cmake: $(if (Get-Command cmake -ErrorAction SilentlyContinue) { (cmake --version | Select-Object -First 1) } else { 'cmake not found' })"
           Write-Host "python: $(if (Get-Command python -ErrorAction SilentlyContinue) { (python --version) } else { 'python not found' })"
           Write-Host "git: $(git --version)"
-          Write-Host "yasm: $(if (Get-Command yasm -ErrorAction SilentlyContinue) { (yasm --version 2>&1 | Select-Object -First 1) } else { 'yasm not found' })"
+        # Write-Host "yasm: $(if (Get-Command yasm -ErrorAction SilentlyContinue) { (yasm --version 2>&1 | Select-Object -First 1) } else { 'yasm not found' })"
 
       # Extract every .tar.gz found under the avm repo into its containing folder
       - name: Extract .tar.gz archives in avm
