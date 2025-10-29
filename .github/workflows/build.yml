@@ -38,7 +38,7 @@ jobs:
       - name: Install build tools with Chocolatey
         shell: pwsh
         run: |
-          choco install -y --limit-output cmake git python3 nasm 7zip llvm strawberryperl clang
+          choco install -y --limit-output cmake git python3 nasm 7zip strawberryperl
           # Wait up to ~30s for tools to appear in PATH if necessary
           $tries = 0
           while ($tries -lt 15 -and -not (Get-Command clang -ErrorAction SilentlyContinue)) {
