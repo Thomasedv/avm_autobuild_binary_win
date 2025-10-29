@@ -146,7 +146,7 @@ jobs:
       - name: Encode a test video using ffmpeg
         shell: pwsh
         run: |
-          ffmpeg -f lavfi -i testsrc2=duration=30:size=640x480:rate=25 -strict -1 D:/a/test.y4m
+          ffmpeg -f lavfi -i testsrc2=duration=7:size=640x480:rate=25 -strict -1 D:/a/test.y4m
           D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/aomenc.exe --good --verbose --ivf --end-usage=vbr --target-bitrate=128 --min-qp=23 --overshoot-pct=5 --undershoot-pct=100 --enable-fwd-kf=120 --cpu-used=1 --tune=ssim --qp=60 --bit-depth=10 --lag-in-frames=48 --max-intra-rate=128 --min-partition-size=4 --max-partition-size=256 --coeff-cost-upd-freq=2  --mode-cost-upd-freq=2 --mv-cost-upd-freq=2  --threads=8 --sb-size=dynamic --aq-mode=1 --max-reference-frames=7 --passes=1 -o .\testenc.ivf D:/a/test.y4m
 
       - name: Upload test encode ivf
