@@ -137,7 +137,7 @@ jobs:
           cd avm
           mkdir -p ..\aom_build
           cd ..\aom_build
-          cmake -G"Unix Makefiles" "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" -DCMAKE_TOOLCHAIN_FILE=D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm\build/cmake/toolchains/x86_64-mingw-gcc.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output -Wno-dev D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
+          cmake . -G"Unix Makefiles" "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" -DCMAKE_TOOLCHAIN_FILE=D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm\build/cmake/toolchains/x86_64-mingw-gcc.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output -Wno-dev D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
           cd D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build
           make
           Write-Host "build end"
