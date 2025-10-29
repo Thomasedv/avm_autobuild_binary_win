@@ -2,7 +2,7 @@
 # installs clang/cmake/git/python/yasm, ensures yasm is on PATH, and extracts
 # any .tar.gz files found inside the avm repo into their containing folders.
 
-name: Build
+name: VS_Cmake
 
 permissions:
   # Need to be able to delete workflow runs
