@@ -142,6 +142,27 @@ jobs:
           ninja
           Write-Host "build end"
           D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/aomenc.exe --help
+
+      - name: Archive build output with 7-Zip
+        shell: powershell
+        run: |
+          $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
+          if (-not (Test-Path $seven)) {
+            Write-Error "7z not found at $seven. On hosted windows-latest it should be installed by default."
+            exit 1
+          }
+          New-Item -ItemType Directory -Path out -Force | Out-Null
+          # Create a 7z archive (maximum compression). Adjust -mx=9 to change compression level.
+          & $seven a -t7z "out\build.7z" "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/" -mx=9
+          Write-Output "Created out\build.7z"
+
+      - name: Upload 7z build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact-7z
+          path: out/build.7z
+          retention-days: 30
+          
       # test encode(add on 20251029 2241BJT
       - name: Encode a test video using ffmpeg
         shell: pwsh
@@ -232,23 +253,5 @@ jobs:
 
 #          Write-Host "Prune step finished."
 
-      - name: Archive build output with 7-Zip
-        shell: powershell
-        run: |
-          $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
-          if (-not (Test-Path $seven)) {
-            Write-Error "7z not found at $seven. On hosted windows-latest it should be installed by default."
-            exit 1
-          }
-          New-Item -ItemType Directory -Path out -Force | Out-Null
-          # Create a 7z archive (maximum compression). Adjust -mx=9 to change compression level.
-          & $seven a -t7z "out\build.7z" "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/" -mx=9
-          Write-Output "Created out\build.7z"
 
-      - name: Upload 7z build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact-7z
-          path: out/build.7z
-          retention-days: 30
 
