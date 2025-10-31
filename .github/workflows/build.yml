@@ -168,13 +168,22 @@ jobs:
         shell: pwsh
         run: |
           ffmpeg -f lavfi -i testsrc2=duration=4:size=640x480:rate=30 -strict -1 D:/a/test.y4m
-          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/aomenc.exe --good --verbose --ivf --end-usage=q --target-bitrate=128 --min-qp=23 --overshoot-pct=5 --undershoot-pct=100 --enable-fwd-kf=120 --cpu-used=4 --tune=ssim --qp=56 --bit-depth=10 --lag-in-frames=48 --max-intra-rate=128 --min-partition-size=4 --max-partition-size=256 --coeff-cost-upd-freq=2  --mode-cost-upd-freq=2 --mv-cost-upd-freq=2  --threads=10 --sb-size=dynamic --aq-mode=1 --max-reference-frames=7 --passes=1 -o D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf D:/a/test.y4m
-
+          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/aomenc.exe --good --verbose --ivf --end-usage=q --target-bitrate=1000 --min-qp=25 --overshoot-pct=5 --undershoot-pct=100 --enable-fwd-kf=120 --cpu-used=4 --tune=ssim --qp=54 --bit-depth=10 --lag-in-frames=48 --max-intra-rate=128 --min-partition-size=4 --max-partition-size=256 --coeff-cost-upd-freq=2  --mode-cost-upd-freq=2 --mv-cost-upd-freq=2  --threads=16 --sb-size=dynamic --aq-mode=1 --max-reference-frames=7 --passes=1 -o D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf D:/a/test.y4m
+          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/aomdec.exe --summary -o D:/a/testaftenc.y4m D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf
+          ffmpeg.exe -i D:/a/testaftenc.y4m -c:v ffv1 -level 3 -slices 4 -map 0:v D:/a/testaftenc.mkv
+          
       - name: Upload test encode ivf
         uses: actions/upload-artifact@v4
         with:
           name: testenc.ivf
           path: D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf
+          retention-days: 30
+          
+      - name: Upload after encode ffv1 mkv video
+        uses: actions/upload-artifact@v4
+        with:
+          name: testaftenc.mkv
+          path: D:/a/testaftenc.mkv
           retention-days: 30
           
       # Final step: prune workflow runs older than 15 days (runs regardless of success/failure)
