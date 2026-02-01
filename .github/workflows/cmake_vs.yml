@@ -31,6 +31,9 @@ jobs:
         run: |
           # Clone into a subfolder 'avm'
           git clone https://gitlab.com/AOMediaCodec/avm.git avm
+          cd avm
+          git checkout research-v13.0.0
+          cd ..
           Write-Host "Clone complete. Listing avm top-level:"
           Get-ChildItem avm -Force
 
