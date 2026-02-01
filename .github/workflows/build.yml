@@ -26,7 +26,7 @@ jobs:
         shell: pwsh
         run: |
           # Clone into a subfolder 'avm'
-          git clone git@gitlab.com:AOMediaCodec/avm.git avm
+          git clone https://gitlab.com/AOMediaCodec/avm.git avm
           git checkout research-v13.0.0
           Write-Host "Clone complete. Listing avm top-level:"
           Get-ChildItem avm -Force
