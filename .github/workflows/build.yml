@@ -10,12 +10,8 @@ permissions:
   # read access to repo contents (not strictly required here, but commonly useful)
   contents: read
 
-on:
-  schedule:
-    # 每天北京时间8点运行（UTC时间0点）
-    - cron: '0 0 * * *'
-  workflow_dispatch:
-
+on: workflow_dispatch
+  
 jobs:
   windows-build:
     runs-on: windows-latest
