@@ -10,8 +10,9 @@ permissions:
   # read access to repo contents (not strictly required here, but commonly useful)
   contents: read
 
-on: workflow_dispatch
-  
+on:
+  workflow_dispatch:
+
 jobs:
   windows-build:
     runs-on: windows-latest
@@ -21,11 +22,9 @@ jobs:
       - name: Checkout this repo
         uses: actions/checkout@v4
 
-      # Clone the public AVM repo (no token needed)
       - name: Clone public AVM GitLab repo
         shell: pwsh
         run: |
-          # Clone into a subfolder 'avm'
           git clone https://gitlab.com/AOMediaCodec/avm.git avm
           cd avm
           git checkout research-v13.0.0
@@ -64,7 +63,6 @@ jobs:
             }
           }
 
-      # Verify the installed tools (sanity check)
       - name: Verify installed tools
         shell: pwsh
         run: |
@@ -128,33 +126,41 @@ jobs:
           Write-Host "All archives processed. Listing top-level of avm:"
           Get-ChildItem -Path $repoDir -Force
 
-      # Placeholder: add your CMake / build commands here
       - name: Configure and build
         shell: pwsh
         run: |
           Write-Host "my script start"
-          cd avm
-          mkdir -p ..\aom_build
-          cd ..\aom_build
-          cmake -G "Ninja" -S . -DAOM_TARGET_CPU=generic -B build -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output -Wno-dev D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
-          cmake -LA D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
-          cd D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build
-          ninja
+
+          $SourceDir = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/avm"
+          $BuildRoot = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build"
+          $BuildDir  = "$BuildRoot/build"
+          $OutputDir = "$BuildDir/output"
+
+          New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
+
+          cmake -G Ninja `
+            -S $SourceDir `
+            -B $BuildDir `
+            -DAOM_TARGET_CPU=generic `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_SHARED_LIBS=0 `
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$OutputDir `
+            -Wno-dev
+
+          cmake -LA -N $BuildDir
+          cmake --build $BuildDir --config Release
+
           Write-Host "build end"
-          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/avmenc.exe --help
+          & "$OutputDir/avmenc.exe" --help
 
       - name: Archive build output with 7-Zip
-        shell: powershell
+        shell: pwsh
         run: |
           $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
-          if (-not (Test-Path $seven)) {
-            Write-Error "7z not found at $seven. On hosted windows-latest it should be installed by default."
-            exit 1
-          }
           New-Item -ItemType Directory -Path out -Force | Out-Null
-          # Create a 7z archive (maximum compression). Adjust -mx=9 to change compression level.
           & $seven a -t7z "out\build.7z" "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/" -mx=9
-          Write-Output "Created out\build.7z"
 
       - name: Upload 7z build artifact
         uses: actions/upload-artifact@v4
@@ -162,106 +168,25 @@ jobs:
           name: build-artifact-7z
           path: out/build.7z
           retention-days: 30
-          
-      # test encode(add on 20251029 2241BJT
+
       - name: Encode a test video using ffmpeg
         shell: pwsh
         run: |
           ffmpeg -f lavfi -i testsrc2=duration=4:size=640x480:rate=30 -strict -1 D:/a/test.y4m
-          # D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/[del_]avmenc.exe --good --verbose --ivf --end-usage=q --target-bitrate=300 --min-qp=50 --overshoot-pct=5 --undershoot-pct=100 --enable-fwd-kf=120 --cpu-used=4 --tune=ssim --qp=120 --lag-in-frames=48 --max-intra-rate=128 --min-partition-size=4 --max-partition-size=256 --coeff-cost-upd-freq=2  --mode-cost-upd-freq=2 --mv-cost-upd-freq=2  --threads=16 --sb-size=dynamic --aq-mode=2 --max-reference-frames=7 --passes=1 -o D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf D:/a/test.y4m
-          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/avmenc.exe --good --verbose --ivf --end-usage=q --target-bitrate=300 --min-qp=50 --overshoot-pct=5 --undershoot-pct=100 --enable-fwd-kf=120 --cpu-used=3 --tune=ssim --qp=65 --lag-in-frames=48 --max-intra-rate=128 --min-partition-size=4 --max-partition-size=256 --coeff-cost-upd-freq=2  --mode-cost-upd-freq=2 --mv-cost-upd-freq=2  --threads=16 --sb-size=dynamic --aq-mode=2 --max-reference-frames=7 --passes=1 -o D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf D:/a/test.y4m
+          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/avmenc.exe --good --verbose --ivf --cpu-used=3 --qp=65 -o D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf D:/a/test.y4m
           D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/avmdec.exe --summary -o D:/a/testaftenc.y4m D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf
-          ffmpeg.exe -i D:/a/testaftenc.y4m -c:v ffv1 -level 3 -slices 4 -map 0:v D:/a/testaftenc.mkv
-          
+          ffmpeg -i D:/a/testaftenc.y4m -c:v ffv1 -level 3 -slices 4 D:/a/testaftenc.mkv
+
       - name: Upload test encode ivf
         uses: actions/upload-artifact@v4
         with:
           name: testenc.ivf
           path: D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/testenc.ivf
           retention-days: 30
-          
+
       - name: Upload after encode ffv1 mkv video
         uses: actions/upload-artifact@v4
         with:
           name: testaftenc.mkv
           path: D:/a/testaftenc.mkv
           retention-days: 30
-          
-      # Final step: prune workflow runs older than 15 days (runs regardless of success/failure)
-#      - name: Prune workflow runs older than 15 days
- #       if: always()
- #       shell: pwsh
- #       run: |
-          # This script uses the repository's GITHUB_TOKEN and requires permissions.actions: write (set above).
- #         $repo = $env:GITHUB_REPOSITORY
- #         $token = $env:GITHUB_TOKEN
- #         $currentRunId = [int]$env:GITHUB_RUN_ID
- #         $cutoff = (Get-Date).AddDays(-15)
- #         if (-not $token) {
- #           Write-Warning "GITHUB_TOKEN is not available; cannot prune runs."
- #           exit 0
- #         }
-#
-#          Write-Host "Pruning workflow runs in $repo older than $($cutoff.ToString('u')) (skipping current run id $currentRunId)..."
-#
-#          $per_page = 100
-#          $page = 1
-#          while ($true) {
-#            $url = "https://api.github.com/repos/$repo/actions/runs?per_page=$per_page&page=$page"
-#            try {
-#              $resp = Invoke-RestMethod -Uri $url -Headers @{
-#                Authorization = "Bearer $token"
-#                Accept = "application/vnd.github.v3+json"
-#                'User-Agent' = 'github-actions/prune-script'
-#              } -Method Get
-#            } catch {
-#              Write-Error "Failed to list workflow runs: $_"
-#              break
-#            }
-#
-#            $runs = $resp.workflow_runs
-#            if (-not $runs -or $runs.Count -eq 0) {
-#              break
-#            }
-
-#            foreach ($r in $runs) {
-#              try {
-#                $created = [DateTime]::Parse($r.created_at)
-#              } catch {
-#                Write-Warning "Could not parse created_at for run id $($r.id), skipping."
-#                continue
-#              }
-#              if ($created -lt $cutoff) {
-#                $rid = [int]$r.id
-#                if ($rid -eq $currentRunId) {
-#                  Write-Host "Skipping current run $rid."
-#                  continue
-#                }
-#                Write-Host "Deleting run $rid (created: $created, workflow: $($r.name), status: $($r.status))"
-#                $delUrl = "https://api.github.com/repos/$repo/actions/runs/$rid"
-#                try {
-#                  Invoke-RestMethod -Uri $delUrl -Headers @{
-#                    Authorization = "Bearer $token"
-#                    Accept = "application/vnd.github.v3+json"
-#                    'User-Agent' = 'github-actions/prune-script'
-#                  } -Method Delete
-#                  Write-Host "Deleted run $rid"
-#                } catch {
-#                  Write-Warning "Failed to delete run ${rid}: $_"
-#                }
-#              } else {
-                # runs are returned newest-first; if this run is newer than cutoff, subsequent ones on same page may still be older,
-                # so we continue checking all items on the page.
-#                Write-Host "Keeping run $($r.id) created $created"
-#              }
-#            }
-
-            # If we received fewer than per_page runs, we're on the last page
-#            if ($runs.Count -lt $per_page) { break }
-#            $page++
-#          }
-
-#          Write-Host "Prune step finished."
-
-
-
