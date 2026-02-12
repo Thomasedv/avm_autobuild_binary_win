@@ -37,6 +37,7 @@ jobs:
         shell: pwsh
         run: |
           choco install -y --limit-output cmake git python3 nasm 7zip strawberryperl ffmpeg
+          choco install -y --limit-output ninja
           # Wait up to ~30s for tools to appear in PATH if necessary
           $tries = 0
           while ($tries -lt 15 -and -not (Get-Command clang -ErrorAction SilentlyContinue)) {
@@ -130,9 +131,14 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "my script start"
-
+          
+          cd avm
+          mkdir -p ..\aom_build
+          cd ..\aom_build
+          
           $SourceDir = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/avm"
           $BuildRoot = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build"
+                        D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output
           $BuildDir  = "$BuildRoot/build"
           $OutputDir = "$BuildDir/output"
 
