@@ -129,19 +129,42 @@ jobs:
           Get-ChildItem -Path $repoDir -Force
 
       # Placeholder: add your CMake / build commands here
-      - name: Configure and build
-        shell: pwsh
-        run: |
-          Write-Host "my script start"
-          cd avm
-          mkdir -p ..\aom_build
-          cd ..\aom_build
-          cmake -G "Ninja" -S . -DAOM_TARGET_CPU=generic -B build -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output -Wno-dev D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
-          cmake -LA D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
-          cd D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build
-          ninja
-          Write-Host "build end"
-          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/avmenc.exe --help
+     - name: Configure and build
+  shell: pwsh
+  run: |
+    Write-Host "my script start"
+
+    # Define paths
+    $SourceDir = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/avm"
+    $BuildRoot = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build"
+    $BuildDir  = "$BuildRoot/build"
+    $OutputDir = "$BuildDir/output"
+
+    # Create build directory
+    New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
+
+    # Configure
+    cmake -G Ninja `
+      -S $SourceDir `
+      -B $BuildDir `
+      -DAOM_TARGET_CPU=generic `
+      -DCMAKE_C_COMPILER=clang-cl `
+      -DCMAKE_CXX_COMPILER=clang-cl `
+      -DCMAKE_BUILD_TYPE=Release `
+      -DBUILD_SHARED_LIBS=0 `
+      -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$OutputDir `
+      -Wno-dev
+
+    # Show configured options (correct usage)
+    cmake -LA -N $BuildDir
+
+    # Build
+    cmake --build $BuildDir --config Release
+
+    Write-Host "build end"
+
+    # Test encoder
+    & "$OutputDir/avmenc.exe" --help
 
       - name: Archive build output with 7-Zip
         shell: powershell
