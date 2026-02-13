@@ -138,7 +138,6 @@ jobs:
           
           $SourceDir = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/avm"
           $BuildRoot = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build"
-                        D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output
           $BuildDir  = "$BuildRoot/build"
           $OutputDir = "$BuildDir/output"
 
@@ -159,7 +158,6 @@ jobs:
           cmake --build $BuildDir --config Release
 
           Write-Host "build end"
-          & "$OutputDir/avmenc.exe" --help
 
       - name: Archive build output with 7-Zip
         shell: pwsh
