@@ -151,12 +151,13 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang-cl `
             -DCMAKE_BUILD_TYPE=Release `
             -DBUILD_SHARED_LIBS=0 `
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 `
             -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$OutputDir `
             -Wno-dev
 
           cmake -LA -N $BuildDir
-          cmake --build $BuildDir --config Release
-
+          cd D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build
+          ninja
           Write-Host "build end"
 
       - name: Archive build output with 7-Zip
