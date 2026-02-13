@@ -160,7 +160,7 @@ jobs:
           ninja
           Write-Host "build end"
 
-       - name: Archive build output with 7-Zip
+      - name: Archive build output with 7-Zip
         shell: powershell
         run: |
           $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
