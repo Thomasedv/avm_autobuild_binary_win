@@ -151,7 +151,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang-cl `
             -DCMAKE_BUILD_TYPE=Release `
             -DBUILD_SHARED_LIBS=0 `
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 `
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
             -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$OutputDir `
             -Wno-dev
 
