@@ -131,35 +131,28 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "my script start"
-          
           cd avm
           mkdir -p ..\aom_build
           cd ..\aom_build
-          
-          $SourceDir = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/avm"
-          $BuildRoot = "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build"
-          $BuildDir  = "$BuildRoot/build"
-          $OutputDir = "$BuildDir/output"
-
-          New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
-
-          cmake -G Ninja `
-            -S $SourceDir `
-            -B $BuildDir `
-            -DAOM_TARGET_CPU=generic `
-            -DCMAKE_C_COMPILER=clang-cl `
-            -DCMAKE_CXX_COMPILER=clang-cl `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DBUILD_SHARED_LIBS=0 `
-            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
-            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$OutputDir `
-            -Wno-dev
-
-          cmake -LA -N $BuildDir
+          cmake -G "Ninja" -S . -DAOM_TARGET_CPU=generic -B build -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output -Wno-dev D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
+          cmake -LA D:\a\avm_autobuild_binary_win\avm_autobuild_binary_win\avm
           cd D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build
           ninja
           Write-Host "build end"
-
+          D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/avmenc.exe --help
+          
+      - name: Find built executables
+        shell: pwsh
+        run: |
+           Write-Host "=== Searching for avmenc/avmdec executables ==="
+           Get-ChildItem -Path "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build" `
+             -Recurse -Include avmenc.exe,avmdec.exe -File |
+             ForEach-Object { Write-Host $_.FullName }
+   
+            Write-Host "`n=== Listing build directory top-level ==="
+            Get-ChildItem -Path "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build" -File |
+              Where-Object { $_.Extension -eq '.exe' } |
+              ForEach-Object { Write-Host $_.FullName }    
       - name: Archive build output with 7-Zip
         shell: powershell
         run: |
@@ -172,13 +165,6 @@ jobs:
           # Create a 7z archive (maximum compression). Adjust -mx=9 to change compression level.
           & $seven a -t7z "out\build.7z" "D:/a/avm_autobuild_binary_win/avm_autobuild_binary_win/aom_build/build/output/" -mx=9
           Write-Output "Created out\build.7z"
-
-      - name: Upload 7z build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact-7z
-          path: out/build.7z
-          retention-days: 30
           
       - name: Encode a test video using ffmpeg
         shell: pwsh
