@@ -1,21 +1,15 @@
-# This is a Windows-only workflow that clones the public avm GitLab repo,
-# installs clang/cmake/git/python/yasm, ensures yasm is on PATH, and extracts
-# any .tar.gz files found inside the avm repo into their containing folders.
 name: Build
 permissions:
-    actions: write
-    contents: read
+  actions: write
+  contents: read
 on:
-    workflow_dispatch:
-
+  workflow_dispatch: null
 jobs:
   windows-build:
     runs-on: windows-latest
-
     steps:
       - name: Checkout this repo
         uses: actions/checkout@v4
-
       - name: Clone public AVM GitLab repo
         shell: pwsh
         run: |
@@ -25,19 +19,23 @@ jobs:
           cd ..
           Write-Host "Clone complete. Listing avm top-level:"
           Get-ChildItem avm -Force
-
       - name: Install build tools with Chocolatey
         shell: pwsh
-        run: |
-          choco install -y --limit-output cmake git python3 nasm 7zip strawberryperl ffmpeg
+        run: >
+          choco install -y --limit-output cmake git python3 nasm 7zip
+          strawberryperl ffmpeg
+
           choco install -y --limit-output ninja
+
           $tries = 0
-          while ($tries -lt 15 -and -not (Get-Command clang -ErrorAction SilentlyContinue)) {
+
+          while ($tries -lt 15 -and -not (Get-Command clang -ErrorAction
+          SilentlyContinue)) {
             Start-Sleep -Seconds 2
             $tries++
           }
-          Write-Host "Chocolatey install step finished."
 
+          Write-Host "Chocolatey install step finished."
       - name: Add common tool locations to PATH
         shell: pwsh
         run: |
@@ -54,34 +52,45 @@ jobs:
               Write-Host "Not present: $p"
             }
           }
-
       - name: Verify installed tools
         shell: pwsh
-        run: |
-          Write-Host "clang: $(if (Get-Command clang -ErrorAction SilentlyContinue) { (clang --version |
-Select-Object -First 1) } else { 'clang not found' })"
-          Write-Host "cmake: $(if (Get-Command cmake -ErrorAction SilentlyContinue) { (cmake --version |
-Select-Object -First 1) } else { 'cmake not found' })"
-          Write-Host "python: $(if (Get-Command python -ErrorAction SilentlyContinue) { (python --version) } else {
-'python not found' })"
-          Write-Host "git: $(git --version)"
-          Write-Host "nasm: $(if (Get-Command nasm -ErrorAction SilentlyContinue) { (nasm --version 2>&1 |
-Select-Object -First 1) } else { 'nasm not found' })"
+        run: >
+          Write-Host "clang: $(if (Get-Command clang -ErrorAction
+          SilentlyContinue) { (clang --version | Select-Object -First 1) } else
+          { 'clang not found' })"
 
+          Write-Host "cmake: $(if (Get-Command cmake -ErrorAction
+          SilentlyContinue) { (cmake --version | Select-Object -First 1) } else
+          { 'cmake not found' })"
+
+          Write-Host "python: $(if (Get-Command python -ErrorAction
+          SilentlyContinue) { (python --version) } else { 'python not found' })"
+
+          Write-Host "git: $(git --version)"
+
+          Write-Host "nasm: $(if (Get-Command nasm -ErrorAction
+          SilentlyContinue) { (nasm --version 2>&1 | Select-Object -First 1) }
+          else { 'nasm not found' })"
       - name: Extract .tar.gz archives in avm
         shell: pwsh
-        run: |
+        run: >
           $repoDir = Join-Path $env:GITHUB_WORKSPACE 'avm'
+
           if (-not (Test-Path $repoDir)) {
             Write-Error "avm repo not found at $repoDir"
             exit 1
           }
+
           Write-Host "Searching for .tar.gz files under $repoDir ..."
-          $archives = Get-ChildItem -Path $repoDir -Filter *.tar.gz -Recurse -File
+
+          $archives = Get-ChildItem -Path $repoDir -Filter *.tar.gz -Recurse
+          -File
+
           if ($archives.Count -eq 0) {
             Write-Host "No .tar.gz files found."
             exit 0
           }
+
           foreach ($a in $archives) {
             $file = $a.FullName
             $targetDir = $a.DirectoryName
@@ -110,8 +119,8 @@ Select-Object -First 1) } else { 'nasm not found' })"
               Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
             }
           }
-          Write-Host "All archives processed."
 
+          Write-Host "All archives processed."
       - name: Configure and build
         shell: pwsh
         run: |
@@ -136,7 +145,6 @@ Select-Object -First 1) } else { 'nasm not found' })"
 
           ninja -C $BuildDir
           Write-Host "Build complete."
-
       - name: Collect built binaries
         shell: pwsh
         run: |
@@ -161,7 +169,6 @@ Select-Object -First 1) } else { 'nasm not found' })"
             exit 1
           }
           & $avmenc --help | Select-Object -First 5
-
       - name: Archive build output with 7-Zip
         shell: powershell
         run: |
@@ -174,38 +181,41 @@ Select-Object -First 1) } else { 'nasm not found' })"
           New-Item -ItemType Directory -Path out -Force | Out-Null
           & $seven a -t7z "out\build.7z" "$OutputDir\*" -mx=9
           Write-Output "Created out\build.7z"
-
       - name: Upload 7z build artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-artifact-7z
           path: out/build.7z
           retention-days: 30
-
       - name: Encode a test video using ffmpeg
         shell: pwsh
-        run: |
+        run: >
           $OutputDir = "$env:GITHUB_WORKSPACE/aom_build/output"
+
           $TestDir   = "$env:GITHUB_WORKSPACE/test_output"
+
           New-Item -ItemType Directory -Force -Path $TestDir | Out-Null
 
-          ffmpeg -f lavfi -i testsrc2=duration=4:size=640x480:rate=30 -strict -1 "$TestDir/test.y4m"
 
-          & "$OutputDir/avmenc.exe" --good --verbose --ivf --cpu-used=3 --qp=65 `
+          ffmpeg -f lavfi -i testsrc2=duration=4:size=640x480:rate=30 -strict -1
+          "$TestDir/test.y4m"
+
+
+          & "$OutputDir/avmenc.exe" --good --verbose --ivf --cpu-used=3 --qp=65
+          `
             -o "$TestDir/testenc.ivf" "$TestDir/test.y4m"
 
           & "$OutputDir/avmdec.exe" --summary `
             -o "$TestDir/testaftenc.y4m" "$TestDir/testenc.ivf"
 
-          ffmpeg -i "$TestDir/testaftenc.y4m" -c:v ffv1 -level 3 -slices 4 "$TestDir/testaftenc.mkv"
-
+          ffmpeg -i "$TestDir/testaftenc.y4m" -c:v ffv1 -level 3 -slices 4
+          "$TestDir/testaftenc.mkv"
       - name: Upload test encode ivf
         uses: actions/upload-artifact@v4
         with:
           name: testenc.ivf
           path: ${{ github.workspace }}/test_output/testenc.ivf
           retention-days: 30
-
       - name: Upload after encode ffv1 mkv video
         uses: actions/upload-artifact@v4
         with:
